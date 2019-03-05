@@ -2,7 +2,8 @@ import { Scene } from 'phaser';
 
 class GameScene extends Scene {
   constructor() {
-    super();
+    super('game');
+
     this.score = 0;
     this.gameOver = false;
   }
@@ -10,7 +11,6 @@ class GameScene extends Scene {
   // ========================================================================
   // Preload
   preload() {
-    this.load.image('logo', 'assets/logo.png');
     this.load.image('sky', 'assets/sky.png');
     this.load.image('ground', 'assets/platform.png');
     this.load.image('star', 'assets/star.png');
@@ -32,7 +32,11 @@ class GameScene extends Scene {
     this.createStars();
     this.createBombs();
 
+    this.score = 0;
     this.scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+    this.gameOverText = this.add.text(400, 300, 'Game Over', { fontSize: '64px', fill: '#000' });
+    this.gameOverText.setOrigin(0.5);
+    this.gameOverText.visible = false;
   }
 
   createPlatforms() {
@@ -45,6 +49,7 @@ class GameScene extends Scene {
 
   createPlayer() {
     this.player = this.physics.add.sprite(100, 450, 'dude');
+    this.player.setCircle(14, 2, 12);
     this.player.setBounce(0.2);
     this.player.setCollideWorldBounds(true);
     this.physics.add.collider(this.player, this.platforms);
@@ -78,12 +83,14 @@ class GameScene extends Scene {
     this.stars = this.physics.add.group({
       key: 'star',
       repeat: 11,
-      setXY: { x: 12, y: 0, stepX: 70 },
+      setXY: { x: 12, y: 0, stepX: 66 },
     });
-
     this.stars.children.iterate((child) => {
+      child.setCircle(14, -2, -2);
       child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
     });
+    // this.stars.setCircle(14, 2, 12)
+
     this.physics.add.collider(this.stars, this.platforms);
     this.physics.add.overlap(this.player, this.stars, this.collectStar, null, this);
   }
@@ -92,7 +99,7 @@ class GameScene extends Scene {
     star.disableBody(true, true);
 
     this.score += 10;
-    this.scoreText.setText('Score: ' + this.score);
+    this.scoreText.setText(`Score: ${this.score}`);
 
     if (this.stars.countActive(true) === 0) {
       this.stars.children.iterate((child) => {
@@ -102,6 +109,7 @@ class GameScene extends Scene {
       const x = (this.player.x < 400) ? Phaser.Math.Between(400, 800) : Phaser.Math.Between(0, 400);
 
       const bomb = this.bombs.create(x, 16, 'bomb');
+      bomb.setCircle()
       bomb.setBounce(1);
       bomb.setCollideWorldBounds(true);
       bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
@@ -119,6 +127,8 @@ class GameScene extends Scene {
     player.setTint(0xff0000);
     player.anims.play('turn');
     this.gameOver = true;
+    this.gameOverText.visible = true;
+    this.input.on('pointerdown', () => this.scene.start('preload'));
   }
 
   // ========================================================================
